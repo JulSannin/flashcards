@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Флешкарточки</title>
+  <meta name="description" content="Карточки с интервальными повторениями (SM-2). Колода тянется из GitHub." />
+
+  <!-- PWA -->
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <meta name="theme-color" content="#4f46e5" />
+  <link rel="icon" href="./icons/icon-192.png" />
+  <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Карточки" />
+
+  <link rel="stylesheet" href="./css/styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="stats">
+      <span class="stat" title="Повторений в очереди"><b id="stat-review">0</b> повтор.</span>
+      <span class="stat stat-new" title="Новых карточек в очереди"><b id="stat-new">0</b> новых</span>
+      <span class="stat stat-done" title="Сделано сегодня"><b id="stat-done">0</b> готово</span>
+    </div>
+    <div class="actions">
+      <button id="refresh-btn" class="icon-btn" title="Обновить колоду из GitHub" aria-label="Обновить">⟳</button>
+      <button id="settings-btn" class="icon-btn" title="Настройки" aria-label="Настройки">⚙</button>
+    </div>
+  </header>
+
+  <main>
+    <section id="card-area" hidden>
+      <div id="card" class="card" role="button" tabindex="0" aria-label="Вопрос">
+        <div class="card-inner">
+          <div class="card-face card-front">
+            <p id="question"></p>
+          </div>
+          <div class="card-face card-back">
+            <p id="answer"></p>
+          </div>
+        </div>
+      </div>
+      <p class="hint">Нажмите на карточку или пробел, чтобы перевернуть</p>
+    </section>
+
+    <section id="empty-state" class="empty" hidden>
+      <div class="empty-emoji">🎉</div>
+      <h2>На сегодня всё!</h2>
+      <p id="next-due"></p>
+      <button id="refresh-empty" class="btn ghost" onclick="document.getElementById('refresh-btn').click()">Проверить обновления</button>
+    </section>
+  </main>
+
+  <footer id="controls" class="controls" hidden>
+    <button id="show-btn" class="btn primary">Показать ответ</button>
+    <div id="grades" class="grades" hidden>
+      <button class="grade again" data-grade="again">Не помню<span class="grade-when"></span></button>
+      <button class="grade hard" data-grade="hard">Трудно<span class="grade-when"></span></button>
+      <button class="grade good" data-grade="good">Хорошо<span class="grade-when"></span></button>
+      <button class="grade easy" data-grade="easy">Легко<span class="grade-when"></span></button>
+    </div>
+  </footer>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <dialog id="settings" class="settings">
+    <form id="settings-form" method="dialog">
+      <h2>Настройки</h2>
+      <label>
+        Ссылка на файл с карточками
+        <input id="url-input" type="text" inputmode="url" placeholder="./cards.json или raw-ссылка GitHub" />
+        <small>Можно вставить raw-ссылку: https://raw.githubusercontent.com/&lt;юзер&gt;/&lt;репо&gt;/main/cards.json</small>
+      </label>
+      <label>
+        Новых карточек в день
+        <input id="new-input" type="number" min="0" step="1" />
+      </label>
+      <div class="settings-actions">
+        <button id="reset-btn" type="button" class="btn danger">Сбросить прогресс</button>
+        <div class="spacer"></div>
+        <button type="button" class="btn ghost" onclick="document.getElementById('settings').close()">Отмена</button>
+        <button type="submit" class="btn primary">Сохранить</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script type="module" src="./js/app.js"></script>
+</body>
+</html>

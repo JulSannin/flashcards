@@ -1,0 +1,16 @@
+{
+  "name": "Флешкарточки",
+  "short_name": "Карточки",
+  "description": "Карточки с интервальными повторениями (SM-2). Колода обновляется из GitHub.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0f1226",
+  "theme_color": "#4f46e5",
+  "lang": "ru",
+  "icons": [
+    { "src": "./icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "./icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
