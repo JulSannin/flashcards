@@ -62,31 +62,30 @@ body {
 main {
   flex: 1;
   display: flex;
-  align-items: center;
+  flex-direction: column;
   justify-content: center;
-  padding: 10px 18px;
+  padding: 16px 18px;
 }
-#card-area { width: 100%; max-width: 560px; }
+#card-area { width: 100%; max-width: 560px; margin: 0 auto; }
 
 .card {
   width: 100%;
-  aspect-ratio: 3 / 2;
-  perspective: 1200px;
+  perspective: 1600px;
   cursor: pointer;
   outline: none;
 }
+/* Обе стороны лежат в одной grid-ячейке, поэтому высота карточки
+   подстраивается под бОльшую сторону — длинный ответ помещается целиком. */
 .card-inner {
-  position: relative;
-  width: 100%;
-  height: 100%;
+  display: grid;
+  min-height: 200px;
   transition: transform .5s cubic-bezier(.4, .0, .2, 1);
   transform-style: preserve-3d;
 }
 .card.flipped .card-inner { transform: rotateY(180deg); }
 
 .card-face {
-  position: absolute;
-  inset: 0;
+  grid-area: 1 / 1;
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
   display: flex;
@@ -97,7 +96,6 @@ main {
   border-radius: var(--radius);
   border: 1px solid var(--surface-2);
   box-shadow: 0 18px 40px rgba(0, 0, 0, .45);
-  overflow: auto;
 }
 .card-front { background: linear-gradient(160deg, var(--surface), var(--surface-2)); }
 .card-back {
@@ -125,11 +123,16 @@ main {
 .empty h2 { color: var(--text); margin: 8px 0; }
 
 /* ---------- Управление ---------- */
+/* Липкая панель: остаётся на экране, даже если ответ длинный и страница прокручивается. */
 .controls {
-  padding: 14px 18px calc(18px + env(safe-area-inset-bottom));
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  padding: 16px 18px calc(18px + env(safe-area-inset-bottom));
   max-width: 560px;
   margin: 0 auto;
   width: 100%;
+  background: linear-gradient(to top, var(--bg) 72%, rgba(15, 18, 38, 0));
 }
 .btn {
   border: none;
