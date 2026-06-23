@@ -110,6 +110,31 @@ main {
 }
 .card-back p { font-weight: 500; color: #e6ffe9; }
 
+/* Ответ: обычный текст (по центру) или список (слева). */
+.answer {
+  width: 100%;
+  font-size: clamp(17px, 4.2vw, 24px);
+  line-height: 1.45;
+  font-weight: 500;
+  color: #e6ffe9;
+}
+.answer.has-list { text-align: left; }
+.answer .answer-intro {
+  margin: 0 0 12px;
+  font-size: clamp(16px, 3.8vw, 20px);
+  font-weight: 600;
+}
+.answer-list {
+  margin: 0;
+  padding-left: 1.5em;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-size: clamp(15px, 3.6vw, 19px);
+  line-height: 1.4;
+}
+.answer-list li { padding-left: 4px; }
+
 .hint {
   text-align: center;
   color: var(--muted);

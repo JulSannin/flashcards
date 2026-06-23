@@ -165,6 +165,47 @@ function gradeCurrent(grade) {
   render();
 }
 
+// Распознаём нумерованный список вида «1. ... 2. ... 3. ...» (или «1) 2) 3)»).
+// Нумерация должна идти подряд (1,2,3...) и состоять минимум из 2 пунктов —
+// иначе это обычный текст (например «HTTP/1.1» или «142.250.150.139» не сработают).
+function parseList(text) {
+  const markers = [...text.matchAll(/(\d+)[.)]\s+/g)];
+  const sequential = markers.length >= 2 && markers.every((m, i) => Number(m[1]) === i + 1);
+  if (!sequential) return null;
+
+  const intro = text.slice(0, markers[0].index).trim().replace(/[:：]\s*$/, '');
+  const items = markers.map((m, i) => {
+    const start = m.index + m[0].length;
+    const end = i + 1 < markers.length ? markers[i + 1].index : text.length;
+    return text.slice(start, end).trim().replace(/[;；]\s*$/, '');
+  });
+  return { intro, items };
+}
+
+// Рисуем ответ: список — как <ol>, обычный ответ — как текст.
+function renderAnswer(el, text) {
+  el.replaceChildren();
+  el.classList.remove('has-list');
+  const parsed = parseList(text);
+  if (!parsed) { el.textContent = text; return; }
+
+  el.classList.add('has-list');
+  if (parsed.intro) {
+    const p = document.createElement('p');
+    p.className = 'answer-intro';
+    p.textContent = parsed.intro;
+    el.appendChild(p);
+  }
+  const ol = document.createElement('ol');
+  ol.className = 'answer-list';
+  for (const item of parsed.items) {
+    const li = document.createElement('li');
+    li.textContent = item; // textContent — без риска XSS
+    ol.appendChild(li);
+  }
+  el.appendChild(ol);
+}
+
 // ---------- Рендер ----------
 function render() {
   const card = byId(session[0]);
@@ -194,7 +235,7 @@ function render() {
   }
 
   $('#question').textContent = card.q;
-  $('#answer').textContent = card.a;
+  renderAnswer($('#answer'), card.a);
   $('#card').classList.toggle('flipped', flipped);
   $('#card').setAttribute('aria-label', flipped ? 'Ответ' : 'Вопрос. Нажмите, чтобы показать ответ');
 
