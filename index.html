@@ -52,7 +52,14 @@
       <div class="empty-emoji">🎉</div>
       <h2>На сегодня всё!</h2>
       <p id="next-due"></p>
+
+      <div id="struggle" class="struggle" hidden>
+        <h3 id="struggle-title"></h3>
+        <ul id="struggle-list" class="struggle-list"></ul>
+      </div>
+
       <div class="empty-actions">
+        <button id="review-hard-btn" class="btn warn" hidden>🔁 Повторить трудные</button>
         <button id="practice-btn" class="btn primary">🔁 Пройти все заново</button>
         <button id="refresh-empty" class="btn ghost" onclick="document.getElementById('refresh-btn').click()">Проверить обновления</button>
       </div>

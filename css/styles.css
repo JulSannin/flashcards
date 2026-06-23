@@ -244,3 +244,40 @@ main {
 /* В режиме повторения подписи интервалов на кнопках не нужны. */
 .grades.no-when .grade-when { display: none; }
 .grades.no-when .grade { padding: 16px 6px; }
+
+/* ---------- Список трудных карточек на экране завершения ---------- */
+.struggle { max-width: 380px; margin: 22px auto 0; }
+.struggle h3 { font-size: 15px; color: var(--text); margin: 0 0 10px; }
+.struggle-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 38vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.struggle-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: var(--surface);
+  border: 1px solid var(--surface-2);
+  border-radius: 12px;
+  padding: 10px 12px;
+  text-align: left;
+}
+.struggle-tag {
+  flex: none;
+  margin-top: 1px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 9px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.struggle-tag.again { background: rgba(239, 68, 68, .18); color: #fca5a5; border: 1px solid var(--again); }
+.struggle-tag.hard { background: rgba(245, 158, 11, .18); color: #fcd34d; border: 1px solid var(--hard); }
+.struggle-q { font-size: 14px; line-height: 1.35; color: var(--text); }
+.btn.warn { background: var(--hard); }

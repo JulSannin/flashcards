@@ -18,6 +18,7 @@ let meta = structuredClone(DEFAULT_META);
 let session = [];     // очередь id на сейчас
 let flipped = false;
 let practiceMode = false; // «пройти все заново»: листаем всю колоду, расписание не трогаем
+let sessionLog = {};      // id -> 'again' | 'hard': что отметили трудным за этот прогон
 
 // ---------- Утилиты ----------
 const $ = (sel) => document.querySelector(sel);
@@ -86,6 +87,7 @@ function rolloverDaily() {
 
 function buildSession() {
   practiceMode = false; // обычная учёба по расписанию
+  sessionLog = {};
   rolloverDaily();
   const now = Date.now();
   const dueIds = [];
@@ -117,19 +119,28 @@ function nextDueLabel() {
   return `через ${Math.round(h / 24)} д`;
 }
 
-// Свободное повторение: прогоняем всю колоду заново, не меняя расписание SRS.
-function startPractice() {
-  if (!deck.length) return;
+// Свободное повторение: прогоняем колоду (или подмножество id) заново, не меняя расписание SRS.
+function startPractice(ids) {
+  const pool = (Array.isArray(ids) && ids.length ? ids : deck.map((c) => c.id)).filter(byId);
+  if (!pool.length) return;
   practiceMode = true;
-  session = shuffle(deck.map((c) => c.id));
+  sessionLog = {};
+  session = shuffle(pool);
   flipped = false;
   render();
+}
+
+// Запоминаем карточки, которые дались тяжело («не помню» важнее «трудно»).
+function logStruggle(id, grade) {
+  if (grade === 'again') sessionLog[id] = 'again';
+  else if (grade === 'hard' && sessionLog[id] !== 'again') sessionLog[id] = 'hard';
 }
 
 // ---------- Оценка ----------
 function gradeCurrent(grade) {
   const id = session[0];
   if (!id) return;
+  logStruggle(id, grade);
 
   // В режиме повторения расписание не трогаем — просто листаем дальше.
   if (practiceMode) {
@@ -178,6 +189,7 @@ function render() {
   if (empty) {
     const nd = nextDueLabel();
     $('#next-due').textContent = nd ? `Следующее повторение ${nd}.` : 'Новых карточек на сегодня тоже нет.';
+    renderStruggle();
     return;
   }
 
@@ -199,6 +211,38 @@ function render() {
         if (btn) btn.textContent = humanInterval(preview[g]);
       }
     }
+  }
+}
+
+// Список карточек, которые дались тяжело за прогон (для экрана завершения).
+function renderStruggle() {
+  const items = Object.entries(sessionLog)
+    .map(([id, grade]) => ({ card: byId(id), grade }))
+    .filter((x) => x.card)
+    .sort((a, b) => (a.grade === 'again' ? 0 : 1) - (b.grade === 'again' ? 0 : 1));
+
+  const box = $('#struggle');
+  const btn = $('#review-hard-btn');
+  box.hidden = !items.length;
+  btn.hidden = !items.length;
+  if (!items.length) return;
+
+  $('#struggle-title').textContent = `Стоит повторить (${items.length})`;
+  btn.textContent = `🔁 Повторить трудные (${items.length})`;
+
+  const list = $('#struggle-list');
+  list.replaceChildren();
+  for (const { card, grade } of items) {
+    const li = document.createElement('li');
+    li.className = 'struggle-item';
+    const tag = document.createElement('span');
+    tag.className = `struggle-tag ${grade}`;
+    tag.textContent = grade === 'again' ? 'не помню' : 'трудно';
+    const q = document.createElement('span');
+    q.className = 'struggle-q';
+    q.textContent = card.q; // textContent — без риска XSS
+    li.append(tag, q);
+    list.appendChild(li);
   }
 }
 
@@ -273,7 +317,8 @@ function wireEvents() {
   $('#settings-btn').addEventListener('click', openSettings);
   $('#settings-form').addEventListener('submit', saveSettings);
   $('#reset-btn').addEventListener('click', resetProgress);
-  $('#practice-btn').addEventListener('click', startPractice);
+  $('#practice-btn').addEventListener('click', () => startPractice());
+  $('#review-hard-btn').addEventListener('click', () => startPractice(Object.keys(sessionLog)));
 
   for (const btn of document.querySelectorAll('.grade')) {
     btn.addEventListener('click', () => gradeCurrent(btn.dataset.grade));
