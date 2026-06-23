@@ -222,3 +222,25 @@ main {
 .settings-actions { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
 .settings-actions .spacer { flex: 1; }
 .settings-actions .btn { padding: 10px 14px; font-size: 14px; }
+
+/* ---------- Режим повторения ---------- */
+.mode-badge {
+  display: inline-block;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: rgba(99, 102, 241, .18);
+  border: 1px solid var(--primary);
+  color: #c7caff;
+  font-size: 13px;
+  font-weight: 600;
+}
+.empty-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 320px;
+  margin: 18px auto 0;
+}
+/* В режиме повторения подписи интервалов на кнопках не нужны. */
+.grades.no-when .grade-when { display: none; }
+.grades.no-when .grade { padding: 16px 6px; }

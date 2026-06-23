@@ -17,6 +17,7 @@ let states = {};      // id -> состояние SM-2
 let meta = structuredClone(DEFAULT_META);
 let session = [];     // очередь id на сейчас
 let flipped = false;
+let practiceMode = false; // «пройти все заново»: листаем всю колоду, расписание не трогаем
 
 // ---------- Утилиты ----------
 const $ = (sel) => document.querySelector(sel);
@@ -84,6 +85,7 @@ function rolloverDaily() {
 }
 
 function buildSession() {
+  practiceMode = false; // обычная учёба по расписанию
   rolloverDaily();
   const now = Date.now();
   const dueIds = [];
@@ -115,10 +117,30 @@ function nextDueLabel() {
   return `через ${Math.round(h / 24)} д`;
 }
 
+// Свободное повторение: прогоняем всю колоду заново, не меняя расписание SRS.
+function startPractice() {
+  if (!deck.length) return;
+  practiceMode = true;
+  session = shuffle(deck.map((c) => c.id));
+  flipped = false;
+  render();
+}
+
 // ---------- Оценка ----------
 function gradeCurrent(grade) {
   const id = session[0];
   if (!id) return;
+
+  // В режиме повторения расписание не трогаем — просто листаем дальше.
+  if (practiceMode) {
+    session.shift();
+    if (grade === 'again') session.push(id); // «Не помню» — вернуть в конец круга
+    if (!session.length) practiceMode = false;
+    flipped = false;
+    render();
+    return;
+  }
+
   const wasNew = !(id in states);
   states[id] = schedule(states[id], grade, Date.now());
   if (wasNew) meta.daily.newDone += 1;
@@ -141,12 +163,17 @@ function render() {
   $('#card-area').hidden = empty;
   $('#controls').hidden = empty;
 
-  // Статистика в шапке.
-  const newLeft = session.filter((id) => !(id in states)).length;
-  const reviewLeft = session.length - newLeft;
-  $('#stat-review').textContent = reviewLeft;
-  $('#stat-new').textContent = newLeft;
-  $('#stat-done').textContent = meta.daily.reviews;
+  // Шапка: обычная статистика или индикатор режима повторения.
+  $('#study-stats').hidden = practiceMode;
+  $('#mode-badge').hidden = !practiceMode;
+  if (practiceMode) {
+    $('#mode-badge').textContent = `🔁 Повторение · осталось ${session.length}`;
+  } else {
+    const newLeft = session.filter((id) => !(id in states)).length;
+    $('#stat-review').textContent = session.length - newLeft;
+    $('#stat-new').textContent = newLeft;
+    $('#stat-done').textContent = meta.daily.reviews;
+  }
 
   if (empty) {
     const nd = nextDueLabel();
@@ -163,10 +190,14 @@ function render() {
   $('#grades').hidden = !flipped;
 
   if (flipped) {
-    const preview = previewIntervals(states[card.id] || null);
-    for (const g of GRADES) {
-      const btn = document.querySelector(`.grade[data-grade="${g}"] .grade-when`);
-      if (btn) btn.textContent = humanInterval(preview[g]);
+    // В режиме повторения интервалы не показываем — расписание не меняется.
+    $('#grades').classList.toggle('no-when', practiceMode);
+    if (!practiceMode) {
+      const preview = previewIntervals(states[card.id] || null);
+      for (const g of GRADES) {
+        const btn = document.querySelector(`.grade[data-grade="${g}"] .grade-when`);
+        if (btn) btn.textContent = humanInterval(preview[g]);
+      }
     }
   }
 }
@@ -242,6 +273,7 @@ function wireEvents() {
   $('#settings-btn').addEventListener('click', openSettings);
   $('#settings-form').addEventListener('submit', saveSettings);
   $('#reset-btn').addEventListener('click', resetProgress);
+  $('#practice-btn').addEventListener('click', startPractice);
 
   for (const btn of document.querySelectorAll('.grade')) {
     btn.addEventListener('click', () => gradeCurrent(btn.dataset.grade));
