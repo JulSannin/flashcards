@@ -1,8 +1,8 @@
 // Service worker: офлайн-доступ + свежая колода.
 // Поднимай VERSION, когда меняешь файлы приложения, чтобы кэш обновился.
-const VERSION = 'v5';
+const VERSION = 'v6';
 const SHELL = `shell-${VERSION}`;
-const DATA = 'cards';
+const DATA = 'data';
 
 const ASSETS = [
   './',
@@ -34,8 +34,8 @@ self.addEventListener('fetch', (e) => {
   if (e.request.method !== 'GET') return;
   const url = new URL(e.request.url);
 
-  // Колода — network-first: всегда тянем свежую, офлайн берём из кэша.
-  if (url.pathname.endsWith('cards.json') || /cards\.json/.test(url.search)) {
+  // Манифест и файлы колод — network-first: всегда тянем свежее, офлайн берём из кэша.
+  if (url.pathname.endsWith('decks.json') || url.pathname.includes('/decks/')) {
     e.respondWith(networkFirst(e.request));
     return;
   }

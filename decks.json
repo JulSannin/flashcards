@@ -1,0 +1,9 @@
+{
+  "decks": [
+    {
+      "id": "network",
+      "name": "Сеть и HTTP",
+      "file": "decks/network.json"
+    }
+  ]
+}
