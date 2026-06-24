@@ -4,6 +4,11 @@
       "id": "network",
       "name": "Сеть и HTTP",
       "file": "decks/network.json"
+    },
+    {
+      "id": "docker",
+      "name": "Docker и Docker Compose",
+      "file": "decks/docker.json"
     }
   ]
 }
