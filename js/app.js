@@ -9,6 +9,7 @@ const LS_META = 'flashcards.v1.meta';     // настройки и дневна�
 const DEFAULT_META = {
   cardsUrl: './cards.json',
   newPerDay: 20,
+  topic: 'all', // выбранная тема ('all' — все темы)
   daily: { date: '', newDone: 0, reviews: 0 },
 };
 
@@ -53,13 +54,13 @@ const byId = (id) => deck.find((c) => c.id === id);
 // Приводим разные форматы файла к [{id,q,a}].
 function normalize(data) {
   const cards = [];
-  const push = (q, a) => {
+  const push = (q, a, topic) => {
     if (q == null || a == null) return;
     q = String(q); a = String(a);
-    cards.push({ id: hashId(q), q, a });
+    cards.push({ id: hashId(q), q, a, topic: topic ? String(topic) : 'Без темы' });
   };
   if (Array.isArray(data)) {
-    for (const it of data) push(it.q ?? it.question ?? it.front, it.a ?? it.answer ?? it.back);
+    for (const it of data) push(it.q ?? it.question ?? it.front, it.a ?? it.answer ?? it.back, it.topic ?? it.theme ?? it.t);
   } else if (data && typeof data === 'object') {
     for (const [q, a] of Object.entries(data)) push(q, a);
   }
@@ -85,6 +86,43 @@ function rolloverDaily() {
   }
 }
 
+// Карточки выбранной темы (или все).
+function activeDeck() {
+  return meta.topic === 'all' ? deck : deck.filter((c) => c.topic === meta.topic);
+}
+
+// Заполняем выпадающий список тем (с количеством карточек).
+function populateTopics() {
+  const sel = $('#topic-select');
+  const counts = new Map();
+  for (const c of deck) counts.set(c.topic, (counts.get(c.topic) || 0) + 1);
+
+  // Если сохранённая тема исчезла из колоды — вернёмся ко «всем».
+  if (meta.topic !== 'all' && !counts.has(meta.topic)) { meta.topic = 'all'; saveMeta(); }
+
+  sel.replaceChildren();
+  const all = document.createElement('option');
+  all.value = 'all';
+  all.textContent = `Все темы (${deck.length})`;
+  sel.appendChild(all);
+  for (const [topic, n] of counts) {
+    const o = document.createElement('option');
+    o.value = topic;
+    o.textContent = `${topic} (${n})`;
+    sel.appendChild(o);
+  }
+  sel.value = meta.topic;
+}
+
+// Смена темы — пересобираем сессию.
+function changeTopic() {
+  meta.topic = $('#topic-select').value;
+  saveMeta();
+  buildSession();
+  flipped = false;
+  render();
+}
+
 function buildSession() {
   practiceMode = false; // обычная учёба по расписанию
   sessionLog = {};
@@ -92,7 +130,7 @@ function buildSession() {
   const now = Date.now();
   const dueIds = [];
   const newIds = [];
-  for (const c of deck) {
+  for (const c of activeDeck()) {
     const s = states[c.id];
     if (!s) newIds.push(c.id);
     else if (s.due <= now) dueIds.push(c.id);
@@ -107,7 +145,7 @@ function buildSession() {
 function nextDueLabel() {
   const now = Date.now();
   let min = Infinity;
-  for (const c of deck) {
+  for (const c of activeDeck()) {
     const s = states[c.id];
     if (s && s.due > now) min = Math.min(min, s.due);
   }
@@ -121,7 +159,7 @@ function nextDueLabel() {
 
 // Свободное повторение: прогоняем колоду (или подмножество id) заново, не меняя расписание SRS.
 function startPractice(ids) {
-  const pool = (Array.isArray(ids) && ids.length ? ids : deck.map((c) => c.id)).filter(byId);
+  const pool = (Array.isArray(ids) && ids.length ? ids : activeDeck().map((c) => c.id)).filter(byId);
   if (!pool.length) return;
   practiceMode = true;
   sessionLog = {};
@@ -309,6 +347,7 @@ async function refresh(silent = false) {
   try {
     const before = deck.length;
     await loadDeck();
+    populateTopics();
     buildSession();
     flipped = false;
     render();
@@ -360,6 +399,7 @@ function wireEvents() {
   $('#reset-btn').addEventListener('click', resetProgress);
   $('#practice-btn').addEventListener('click', () => startPractice());
   $('#review-hard-btn').addEventListener('click', () => startPractice(Object.keys(sessionLog)));
+  $('#topic-select').addEventListener('change', changeTopic);
 
   for (const btn of document.querySelectorAll('.grade')) {
     btn.addEventListener('click', () => gradeCurrent(btn.dataset.grade));
@@ -384,6 +424,7 @@ async function init() {
   } catch (e) {
     toast(`Колода не загрузилась: ${e.message}`, true);
   }
+  populateTopics();
   buildSession();
   render();
 

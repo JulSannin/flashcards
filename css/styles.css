@@ -35,11 +35,31 @@ body {
 /* ---------- Шапка ---------- */
 .topbar {
   display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 18px;
+}
+.topbar-main {
+  display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 14px 18px;
 }
+.topic-bar { display: flex; align-items: center; gap: 8px; }
+.topic-label { flex: none; color: var(--muted); font-size: 13px; }
+.topic-select {
+  flex: 1;
+  min-width: 0;
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--surface-2);
+  border-radius: 12px;
+  padding: 9px 12px;
+  font-size: 14px;
+  font-family: inherit;
+  cursor: pointer;
+}
+.topic-select:focus { outline: 2px solid var(--primary); outline-offset: 1px; }
 .stats { display: flex; gap: 14px; font-size: 13px; color: var(--muted); flex-wrap: wrap; }
 .stat b { color: var(--text); font-size: 15px; }
 .stat-new b { color: var(--easy); }

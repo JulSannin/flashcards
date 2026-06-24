@@ -19,18 +19,24 @@
 </head>
 <body>
   <header class="topbar">
-    <div class="stats">
-      <span id="study-stats" class="study-stats">
-        <span class="stat" title="Повторений в очереди"><b id="stat-review">0</b> повтор.</span>
-        <span class="stat stat-new" title="Новых карточек в очереди"><b id="stat-new">0</b> новых</span>
-        <span class="stat stat-done" title="Сделано сегодня"><b id="stat-done">0</b> готово</span>
-      </span>
-      <span id="mode-badge" class="mode-badge" hidden></span>
+    <div class="topbar-main">
+      <div class="stats">
+        <span id="study-stats" class="study-stats">
+          <span class="stat" title="Повторений в очереди"><b id="stat-review">0</b> повтор.</span>
+          <span class="stat stat-new" title="Новых карточек в очереди"><b id="stat-new">0</b> новых</span>
+          <span class="stat stat-done" title="Сделано сегодня"><b id="stat-done">0</b> готово</span>
+        </span>
+        <span id="mode-badge" class="mode-badge" hidden></span>
+      </div>
+      <div class="actions">
+        <button id="refresh-btn" class="icon-btn" title="Обновить колоду из GitHub" aria-label="Обновить">⟳</button>
+        <button id="settings-btn" class="icon-btn" title="Настройки" aria-label="Настройки">⚙</button>
+      </div>
     </div>
-    <div class="actions">
-      <button id="refresh-btn" class="icon-btn" title="Обновить колоду из GitHub" aria-label="Обновить">⟳</button>
-      <button id="settings-btn" class="icon-btn" title="Настройки" aria-label="Настройки">⚙</button>
-    </div>
+    <label class="topic-bar">
+      <span class="topic-label">Тема:</span>
+      <select id="topic-select" class="topic-select" aria-label="Выбрать тему"></select>
+    </label>
   </header>
 
   <main>

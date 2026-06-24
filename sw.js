@@ -1,6 +1,6 @@
 // Service worker: офлайн-доступ + свежая колода.
 // Поднимай VERSION, когда меняешь файлы приложения, чтобы кэш обновился.
-const VERSION = 'v4';
+const VERSION = 'v5';
 const SHELL = `shell-${VERSION}`;
 const DATA = 'cards';
 
