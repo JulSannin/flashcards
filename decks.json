@@ -9,6 +9,11 @@
       "id": "docker",
       "name": "Docker и Docker Compose",
       "file": "decks/docker.json"
+    },
+    {
+      "id": "react",
+      "name": "React",
+      "file": "decks/react.json"
     }
   ]
 }
