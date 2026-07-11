@@ -14,6 +14,61 @@
       "id": "react",
       "name": "React",
       "file": "decks/react.json"
+    },
+    {
+      "id": "samurai-01",
+      "name": "Самурай 1 · О курсе",
+      "file": "decks/samurai-01.json"
+    },
+    {
+      "id": "samurai-02",
+      "name": "Самурай 2 · Vanilla UI",
+      "file": "decks/samurai-02.json"
+    },
+    {
+      "id": "samurai-03",
+      "name": "Самурай 3 · Node.js",
+      "file": "decks/samurai-03.json"
+    },
+    {
+      "id": "samurai-04",
+      "name": "Самурай 4 · Vite и старт проекта",
+      "file": "decks/samurai-04.json"
+    },
+    {
+      "id": "samurai-05",
+      "name": "Самурай 5 · Метод map",
+      "file": "decks/samurai-05.json"
+    },
+    {
+      "id": "samurai-06",
+      "name": "Самурай 6 · Модули, import/export",
+      "file": "decks/samurai-06.json"
+    },
+    {
+      "id": "samurai-07",
+      "name": "Самурай 7 · JSX vs HTML",
+      "file": "decks/samurai-07.json"
+    },
+    {
+      "id": "samurai-08",
+      "name": "Самурай 8 · Данные и алгоритм рендера",
+      "file": "decks/samurai-08.json"
+    },
+    {
+      "id": "samurai-09",
+      "name": "Самурай 9 · useState",
+      "file": "decks/samurai-09.json"
+    },
+    {
+      "id": "samurai-10",
+      "name": "Самурай 10 · Backend, API, Swagger",
+      "file": "decks/samurai-10.json"
+    },
+    {
+      "id": "samurai-11",
+      "name": "Самурай 11 · useEffect и запросы",
+      "file": "decks/samurai-11.json"
     }
   ]
 }
