@@ -1,6 +1,6 @@
 // Service worker: офлайн-доступ + свежая колода.
 // Поднимай VERSION, когда меняешь файлы приложения, чтобы кэш обновился.
-const VERSION = 'v6';
+const VERSION = 'v7';
 const SHELL = `shell-${VERSION}`;
 const DATA = 'data';
 
@@ -47,8 +47,11 @@ self.addEventListener('fetch', (e) => {
 async function networkFirst(req) {
   try {
     const res = await fetch(req, { cache: 'no-store' });
-    const cache = await caches.open(DATA);
-    cache.put(req, res.clone());
+    // Кэшируем только успешные ответы — иначе офлайн-фолбэк отдавал бы закэшированную ошибку.
+    if (res.ok) {
+      const cache = await caches.open(DATA);
+      cache.put(req, res.clone());
+    }
     return res;
   } catch {
     const cached = await caches.match(req);

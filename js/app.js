@@ -84,20 +84,27 @@ async function loadManifest() {
 
 async function loadDeck(deckId) {
   const entry = manifest.find((d) => d.id === deckId) || manifest[0];
-  currentDeckId = entry.id;
-  meta.deck = entry.id;
-  const res = await fetch(entry.file, { cache: 'no-store' });
+  // Путь колоды резолвим относительно манифеста, а не страницы —
+  // иначе чужой манифест (raw-ссылка) тянул бы колоды с нашего домена.
+  const fileUrl = new URL(entry.file, new URL(meta.manifestUrl || './decks.json', location.href));
+  const res = await fetch(fileUrl, { cache: 'no-store' });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const data = await res.json();
   const cards = normalize(data, entry.id);
   if (!cards.length) throw new Error('В колоде нет карточек');
+  // Состояние меняем только после успешной загрузки, чтобы при ошибке
+  // статистика и сброс прогресса не привязались не к той колоде.
   deck = cards;
+  currentDeckId = entry.id;
+  meta.deck = entry.id;
 }
 
 const currentDeckName = () => (manifest.find((d) => d.id === currentDeckId) || {}).name || currentDeckId || '';
 
 function rolloverDaily() {
-  const today = new Date().toISOString().slice(0, 10);
+  // Локальная дата, а не toISOString (UTC) — иначе день сбрасывался бы не в полночь.
+  const d = new Date();
+  const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   if (meta.daily.date !== today) { meta.daily = { date: today, decks: {} }; saveMeta(); }
 }
 
@@ -130,6 +137,7 @@ async function changeDeck() {
     flipped = false;
     render();
   } catch (e) {
+    $('#deck-select').value = currentDeckId; // вернуть селектор на реально открытую колоду
     toast(`Не удалось открыть колоду: ${e.message}`, true);
   }
 }
@@ -419,8 +427,10 @@ function wireEvents() {
   }
 
   // Горячие клавиши: пробел/Enter — перевернуть; 1–4 — оценки.
+  // Не перехватываем клавиши у интерактивных элементов (кнопки, селектор колод и т.п.),
+  // чтобы Enter/Space активировали их, а не переворачивали карточку.
   document.addEventListener('keydown', (e) => {
-    if (e.target.matches('input, textarea')) return;
+    if (e.target.matches('input, textarea, select, button, a')) return;
     if (!flipped && (e.code === 'Space' || e.code === 'Enter')) { e.preventDefault(); flip(); return; }
     if (flipped) {
       const map = { Digit1: 'again', Digit2: 'hard', Digit3: 'good', Digit4: 'easy' };
