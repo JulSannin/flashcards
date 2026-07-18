@@ -69,6 +69,31 @@
       "id": "samurai-11",
       "name": "Самурай 11 · useEffect и запросы",
       "file": "decks/samurai-11.json"
+    },
+    {
+      "id": "samurai-12",
+      "name": "Самурай 12 · filter и find",
+      "file": "decks/samurai-12.json"
+    },
+    {
+      "id": "samurai-13",
+      "name": "Самурай 13 · Паттерн List-Detail",
+      "file": "decks/samurai-13.json"
+    },
+    {
+      "id": "samurai-14",
+      "name": "Самурай 14 · Truthy/Falsy и условный рендеринг",
+      "file": "decks/samurai-14.json"
+    },
+    {
+      "id": "samurai-15",
+      "name": "Самурай 15 · useEffect: зависимости",
+      "file": "decks/samurai-15.json"
+    },
+    {
+      "id": "samurai-16",
+      "name": "Самурай 16 · Компоненты и декомпозиция",
+      "file": "decks/samurai-16.json"
     }
   ]
 }
