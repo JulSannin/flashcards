@@ -89,6 +89,21 @@
       "id": "samurai-15",
       "name": "Самурай 15 · useEffect: зависимости",
       "file": "quizzes/samurai-15.json"
+    },
+    {
+      "id": "samurai-16",
+      "name": "Самурай 16 · Компоненты и декомпозиция",
+      "file": "quizzes/samurai-16.json"
+    },
+    {
+      "id": "samurai-17",
+      "name": "Самурай 17 · Props и Information Expert",
+      "file": "quizzes/samurai-17.json"
+    },
+    {
+      "id": "samurai-18",
+      "name": "Самурай 18 · Inversion of Control и callbacks",
+      "file": "quizzes/samurai-18.json"
     }
   ]
 }
