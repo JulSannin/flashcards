@@ -29,6 +29,21 @@
       "id": "samurai-03",
       "name": "Самурай 3 · Node.js",
       "file": "quizzes/samurai-03.json"
+    },
+    {
+      "id": "samurai-04",
+      "name": "Самурай 4 · Vite и старт проекта",
+      "file": "quizzes/samurai-04.json"
+    },
+    {
+      "id": "samurai-05",
+      "name": "Самурай 5 · Метод map",
+      "file": "quizzes/samurai-05.json"
+    },
+    {
+      "id": "samurai-06",
+      "name": "Самурай 6 · Модули, import/export",
+      "file": "quizzes/samurai-06.json"
     }
   ]
 }
