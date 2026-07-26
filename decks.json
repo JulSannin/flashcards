@@ -94,6 +94,36 @@
       "id": "samurai-16",
       "name": "Самурай 16 · Компоненты и декомпозиция",
       "file": "decks/samurai-16.json"
+    },
+    {
+      "id": "samurai-17",
+      "name": "Самурай 17 · Props и Information Expert",
+      "file": "decks/samurai-17.json"
+    },
+    {
+      "id": "samurai-18",
+      "name": "Самурай 18 · Inversion of Control и callbacks",
+      "file": "decks/samurai-18.json"
+    },
+    {
+      "id": "samurai-19",
+      "name": "Самурай 19 · Синхронизация компонентов на примере плеера",
+      "file": "decks/samurai-19.json"
+    },
+    {
+      "id": "samurai-20",
+      "name": "Самурай 20 · TypeScript: основы",
+      "file": "decks/samurai-20.json"
+    },
+    {
+      "id": "samurai-21",
+      "name": "Самурай 21 · TypeScript в React",
+      "file": "decks/samurai-21.json"
+    },
+    {
+      "id": "samurai-22",
+      "name": "Самурай 22 · Архитектура и Data Access Layer",
+      "file": "decks/samurai-22.json"
     }
   ]
 }
