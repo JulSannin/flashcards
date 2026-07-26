@@ -74,6 +74,21 @@
       "id": "samurai-12",
       "name": "Самурай 12 · filter и find",
       "file": "quizzes/samurai-12.json"
+    },
+    {
+      "id": "samurai-13",
+      "name": "Самурай 13 · Паттерн List-Detail",
+      "file": "quizzes/samurai-13.json"
+    },
+    {
+      "id": "samurai-14",
+      "name": "Самурай 14 · Truthy/Falsy и условный рендеринг",
+      "file": "quizzes/samurai-14.json"
+    },
+    {
+      "id": "samurai-15",
+      "name": "Самурай 15 · useEffect: зависимости",
+      "file": "quizzes/samurai-15.json"
     }
   ]
 }
