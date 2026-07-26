@@ -1,0 +1,14 @@
+{
+  "quizzes": [
+    {
+      "id": "network",
+      "name": "Сеть и HTTP",
+      "file": "quizzes/network.json"
+    },
+    {
+      "id": "react",
+      "name": "React",
+      "file": "quizzes/react.json"
+    }
+  ]
+}

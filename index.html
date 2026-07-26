@@ -20,7 +20,7 @@
 <body>
   <header class="topbar">
     <div class="topbar-main">
-      <div class="stats">
+      <div id="header-stats" class="stats">
         <span id="study-stats" class="study-stats">
           <span class="stat" title="Повторений в очереди"><b id="stat-review">0</b> повтор.</span>
           <span class="stat stat-new" title="Новых карточек в очереди"><b id="stat-new">0</b> новых</span>
@@ -29,13 +29,23 @@
         <span id="mode-badge" class="mode-badge" hidden></span>
       </div>
       <div class="actions">
-        <button id="refresh-btn" class="icon-btn" title="Обновить колоду из GitHub" aria-label="Обновить">⟳</button>
+        <button id="refresh-btn" class="icon-btn" title="Обновить из GitHub" aria-label="Обновить">⟳</button>
         <button id="settings-btn" class="icon-btn" title="Настройки" aria-label="Настройки">⚙</button>
       </div>
     </div>
-    <label class="topic-bar">
+
+    <div class="app-tabs" role="tablist">
+      <button id="tab-cards-btn" class="app-tab" role="tab" type="button" aria-selected="true">📇 Флешкарточки</button>
+      <button id="tab-quiz-btn" class="app-tab" role="tab" type="button" aria-selected="false">❓ Квиз</button>
+    </div>
+
+    <label class="topic-bar" id="deck-bar">
       <span class="topic-label">Колода:</span>
       <select id="deck-select" class="topic-select" aria-label="Выбрать колоду"></select>
+    </label>
+    <label class="topic-bar" id="quiz-bar" hidden>
+      <span class="topic-label">Квиз:</span>
+      <select id="quiz-select" class="topic-select" aria-label="Выбрать квиз"></select>
     </label>
   </header>
 
@@ -70,6 +80,33 @@
         <button id="refresh-empty" class="btn ghost" onclick="document.getElementById('refresh-btn').click()">Проверить обновления</button>
       </div>
     </section>
+
+    <!-- ---------- Квиз ---------- -->
+    <section id="quiz-area" hidden>
+      <div class="quiz-meta">
+        <span id="quiz-progress"></span>
+        <span id="quiz-score-badge" class="quiz-score-badge"></span>
+      </div>
+      <h2 id="quiz-question" class="quiz-question"></h2>
+      <p id="quiz-hint" class="quiz-hint"></p>
+      <ul id="quiz-options" class="quiz-options"></ul>
+    </section>
+
+    <section id="quiz-result" class="empty" hidden>
+      <div class="empty-emoji" id="quiz-result-emoji">🎉</div>
+      <h2 id="quiz-result-title"></h2>
+      <p id="quiz-result-sub"></p>
+
+      <div id="quiz-wrong-block" class="struggle" hidden>
+        <h3 id="quiz-wrong-title"></h3>
+        <ul id="quiz-wrong-list" class="struggle-list"></ul>
+      </div>
+
+      <div class="empty-actions">
+        <button id="quiz-retry-wrong-btn" class="btn warn" hidden>🔁 Повторить ошибки</button>
+        <button id="quiz-retry-all-btn" class="btn primary">🔁 Пройти заново</button>
+      </div>
+    </section>
   </main>
 
   <footer id="controls" class="controls" hidden>
@@ -80,6 +117,11 @@
       <button class="grade good" data-grade="good">Хорошо<span class="grade-when"></span></button>
       <button class="grade easy" data-grade="easy">Легко<span class="grade-when"></span></button>
     </div>
+  </footer>
+
+  <footer id="quiz-controls" class="controls" hidden>
+    <button id="quiz-submit-btn" class="btn primary" disabled>Ответить</button>
+    <button id="quiz-next-btn" class="btn primary" hidden>Далее</button>
   </footer>
 
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
@@ -96,8 +138,11 @@
         Новых карточек в день
         <input id="new-input" type="number" min="0" step="1" />
       </label>
+      <div class="settings-danger-row">
+        <button id="reset-btn" type="button" class="btn danger">Сбросить прогресс колоды</button>
+        <button id="reset-quiz-btn" type="button" class="btn danger">Сбросить статистику квизов</button>
+      </div>
       <div class="settings-actions">
-        <button id="reset-btn" type="button" class="btn danger">Сбросить прогресс</button>
         <div class="spacer"></div>
         <button type="button" class="btn ghost" onclick="document.getElementById('settings').close()">Отмена</button>
         <button type="submit" class="btn primary">Сохранить</button>

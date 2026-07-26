@@ -1,6 +1,6 @@
 // Service worker: офлайн-доступ + свежая колода.
 // Поднимай VERSION, когда меняешь файлы приложения, чтобы кэш обновился.
-const VERSION = 'v7';
+const VERSION = 'v8';
 const SHELL = `shell-${VERSION}`;
 const DATA = 'data';
 
@@ -34,8 +34,11 @@ self.addEventListener('fetch', (e) => {
   if (e.request.method !== 'GET') return;
   const url = new URL(e.request.url);
 
-  // Манифест и файлы колод — network-first: всегда тянем свежее, офлайн берём из кэша.
-  if (url.pathname.endsWith('decks.json') || url.pathname.includes('/decks/')) {
+  // Манифесты и файлы колод/квизов — network-first: всегда тянем свежее, офлайн берём из кэша.
+  if (
+    url.pathname.endsWith('decks.json') || url.pathname.includes('/decks/')
+    || url.pathname.endsWith('quizzes.json') || url.pathname.includes('/quizzes/')
+  ) {
     e.respondWith(networkFirst(e.request));
     return;
   }

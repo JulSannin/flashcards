@@ -5,12 +5,15 @@ import {
 // ---------- Хранилище ----------
 const LS_STATES = 'flashcards.v1.states'; // расписание по карточкам
 const LS_META = 'flashcards.v1.meta';     // настройки и дневная статистика
+const LS_QUIZ_STATS = 'flashcards.v1.quizStats'; // лучший результат по каждому квизу
 
 const DEFAULT_META = {
   manifestUrl: './decks.json', // манифест со списком колод
   newPerDay: 20,
   deck: null,                  // id выбранной колоды
   daily: { date: '', decks: {} }, // дневная статистика по каждой колоде
+  mode: 'cards',                // 'cards' | 'quiz' — активный режим приложения
+  quiz: null,                   // id выбранного квиза
 };
 
 let manifest = [];      // [{ id, name, file }]
@@ -22,6 +25,20 @@ let session = [];       // очередь id на сейчас
 let flipped = false;
 let practiceMode = false; // «пройти все заново»: листаем всю колоду, расписание не трогаем
 let sessionLog = {};      // id -> 'again' | 'hard': что отметили трудным за этот прогон
+
+// ---------- Квиз: состояние ----------
+let mode = 'cards';          // активный режим UI
+let quizManifest = [];       // [{ id, name, file }]
+let currentQuizId = null;
+let quiz = [];               // вопросы текущего квиза [{ q, options, correct }]
+let quizStats = {};          // quizId -> { bestScore, bestTotal }
+let quizSession = [];        // вопросы текущего прогона (перемешаны)
+let quizIndex = 0;
+let quizSelected = new Set(); // индексы выбранных вариантов текущего вопроса
+let quizAnswered = false;    // ответ на текущий вопрос уже показан
+let quizScore = 0;           // верных ответов за прогон
+let quizWrong = [];           // вопросы, отвеченные неверно в этом прогоне
+let quizRetryMode = false;   // true — прогон «повторить ошибки» (не пишем в статистику)
 
 // ---------- Утилиты ----------
 const $ = (sel) => document.querySelector(sel);
@@ -51,6 +68,11 @@ function load() {
 }
 const saveStates = () => localStorage.setItem(LS_STATES, JSON.stringify(states));
 const saveMeta = () => localStorage.setItem(LS_META, JSON.stringify(meta));
+
+function loadQuizStats() {
+  try { quizStats = JSON.parse(localStorage.getItem(LS_QUIZ_STATS)) || {}; } catch { quizStats = {}; }
+}
+const saveQuizStats = () => localStorage.setItem(LS_QUIZ_STATS, JSON.stringify(quizStats));
 
 const byId = (id) => deck.find((c) => c.id === id);
 
@@ -100,6 +122,69 @@ async function loadDeck(deckId) {
 }
 
 const currentDeckName = () => (manifest.find((d) => d.id === currentDeckId) || {}).name || currentDeckId || '';
+
+// ---------- Квиз: данные ----------
+async function loadQuizManifest() {
+  const res = await fetch('./quizzes.json', { cache: 'no-store' });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const data = await res.json();
+  const list = Array.isArray(data) ? data : (data.quizzes || []);
+  quizManifest = list.filter((q) => q && q.id && q.file);
+  if (!quizManifest.length) throw new Error('В манифесте нет квизов');
+}
+
+// Проверяем и приводим вопросы квиза к строгому формату {q, options, correct}.
+function normalizeQuiz(data) {
+  if (!Array.isArray(data)) return [];
+  return data.map((it) => {
+    const options = Array.isArray(it.options) ? it.options.map(String) : [];
+    const correct = Array.isArray(it.correct)
+      ? [...new Set(it.correct.filter((i) => Number.isInteger(i) && i >= 0 && i < options.length))].sort((a, b) => a - b)
+      : [];
+    if (!it.q || options.length < 2 || !correct.length) return null;
+    return { q: String(it.q), options, correct };
+  }).filter(Boolean);
+}
+
+async function loadQuiz(quizId) {
+  const entry = quizManifest.find((q) => q.id === quizId) || quizManifest[0];
+  // Путь резолвим относительно манифеста — как и с колодами.
+  const fileUrl = new URL(entry.file, new URL('./quizzes.json', location.href));
+  const res = await fetch(fileUrl, { cache: 'no-store' });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const data = await res.json();
+  const questions = normalizeQuiz(data);
+  if (!questions.length) throw new Error('В квизе нет вопросов');
+  // Состояние меняем только после успешной загрузки (см. loadDeck).
+  quiz = questions;
+  currentQuizId = entry.id;
+  meta.quiz = entry.id;
+  quizSession = []; // квиз поменялся — прошлый прогон больше не актуален
+  quizWrong = [];
+}
+
+function populateQuizzes() {
+  const sel = $('#quiz-select');
+  sel.replaceChildren();
+  for (const q of quizManifest) {
+    const o = document.createElement('option');
+    o.value = q.id;
+    o.textContent = q.name || q.id;
+    sel.appendChild(o);
+  }
+  sel.value = currentQuizId;
+}
+
+async function changeQuiz() {
+  try {
+    await loadQuiz($('#quiz-select').value);
+    saveMeta();
+    startQuiz();
+  } catch (e) {
+    $('#quiz-select').value = currentQuizId;
+    toast(`Не удалось открыть квиз: ${e.message}`, true);
+  }
+}
 
 function rolloverDaily() {
   // Локальная дата, а не toISOString (UTC) — иначе день сбрасывался бы не в полночь.
@@ -351,6 +436,173 @@ function flip() {
   render();
 }
 
+// ---------- Квиз: сессия ----------
+// Точное совпадение: верно, только если выбраны ровно все правильные варианты и ни одного лишнего.
+function isAnswerCorrect(question, selected) {
+  if (selected.size !== question.correct.length) return false;
+  for (const i of selected) if (!question.correct.includes(i)) return false;
+  return true;
+}
+
+function startQuiz(onlyWrong = false) {
+  const pool = onlyWrong ? quizWrong : quiz;
+  if (!pool.length) return;
+  quizSession = shuffle([...pool]);
+  quizIndex = 0;
+  quizScore = 0;
+  quizSelected = new Set();
+  quizAnswered = false;
+  quizRetryMode = onlyWrong;
+  quizWrong = []; // ошибки этого прогона считаем заново (pool уже скопирован выше)
+  $('#quiz-result').hidden = true;
+  renderQuiz();
+}
+
+function toggleQuizOption(i, isSingle) {
+  if (quizAnswered) return;
+  if (isSingle) {
+    quizSelected = new Set([i]);
+  } else if (quizSelected.has(i)) {
+    quizSelected.delete(i);
+  } else {
+    quizSelected.add(i);
+  }
+  $('#quiz-submit-btn').disabled = quizSelected.size === 0;
+}
+
+function submitQuizAnswer() {
+  const q = quizSession[quizIndex];
+  if (!q || quizSelected.size === 0) return;
+  quizAnswered = true;
+  if (isAnswerCorrect(q, quizSelected)) quizScore += 1;
+  else quizWrong.push(q);
+  renderQuiz();
+}
+
+function nextQuizQuestion() {
+  quizIndex += 1;
+  quizSelected = new Set();
+  quizAnswered = false;
+  renderQuiz();
+}
+
+// Рисуем варианты ответа: до ответа — кликабельные radio/checkbox,
+// после ответа — статичные, с подсветкой верных/неверных/пропущенных.
+function renderQuizOptionsList(question) {
+  const ul = $('#quiz-options');
+  ul.replaceChildren();
+  const isSingle = question.correct.length === 1;
+  const correctSet = new Set(question.correct);
+
+  question.options.forEach((optText, i) => {
+    const li = document.createElement('li');
+    li.className = 'quiz-option';
+
+    if (quizAnswered) {
+      li.classList.add('answered');
+      const picked = quizSelected.has(i);
+      const isCorrect = correctSet.has(i);
+      if (isCorrect && picked) li.classList.add('correct');
+      else if (!isCorrect && picked) li.classList.add('wrong');
+      else if (isCorrect && !picked) li.classList.add('missed');
+    }
+
+    const input = document.createElement('input');
+    input.type = isSingle ? 'radio' : 'checkbox';
+    input.name = 'quiz-opt';
+    input.checked = quizSelected.has(i);
+    input.disabled = quizAnswered;
+    if (!quizAnswered) input.addEventListener('change', () => toggleQuizOption(i, isSingle));
+
+    const span = document.createElement('span');
+    span.textContent = optText; // textContent — без риска XSS
+
+    li.append(input, span);
+    if (!quizAnswered) li.addEventListener('click', (e) => { if (e.target !== input) input.click(); });
+    ul.appendChild(li);
+  });
+}
+
+// Список вопросов, отвеченных неверно за прогон (для экрана результата).
+function renderQuizWrongList() {
+  const block = $('#quiz-wrong-block');
+  const list = $('#quiz-wrong-list');
+  list.replaceChildren();
+  if (!quizWrong.length) { block.hidden = true; return; }
+
+  block.hidden = false;
+  $('#quiz-wrong-title').textContent = `Стоит повторить (${quizWrong.length})`;
+  for (const q of quizWrong) {
+    const li = document.createElement('li');
+    li.className = 'struggle-item';
+    const tag = document.createElement('span');
+    tag.className = 'struggle-tag again';
+    tag.textContent = 'ошибка';
+    const body = document.createElement('span');
+    body.className = 'struggle-q';
+    body.textContent = `${q.q} — правильно: ${q.correct.map((i) => q.options[i]).join(', ')}`; // textContent — без XSS
+    li.append(tag, body);
+    list.appendChild(li);
+  }
+}
+
+function renderQuizResult() {
+  $('#quiz-controls').hidden = true;
+  $('#quiz-area').hidden = true;
+  $('#quiz-result').hidden = false;
+
+  const total = quizSession.length;
+  const pct = total ? Math.round((quizScore / total) * 100) : 0;
+  $('#quiz-result-emoji').textContent = pct === 100 ? '🏆' : pct >= 70 ? '🎉' : pct >= 40 ? '💪' : '📚';
+  $('#quiz-result-title').textContent = quizRetryMode ? 'Повтор ошибок завершён' : 'Квиз завершён!';
+
+  // Статистику копим только по полным прогонам, не по «повторить ошибки».
+  if (!quizRetryMode) {
+    const stat = quizStats[currentQuizId] || { bestScore: 0, bestTotal: 0 };
+    if (total > 0 && (stat.bestTotal === 0 || quizScore / total > stat.bestScore / stat.bestTotal)) {
+      stat.bestScore = quizScore;
+      stat.bestTotal = total;
+    }
+    quizStats[currentQuizId] = stat;
+    saveQuizStats();
+  }
+
+  let sub = `Результат: ${quizScore} из ${total} (${pct}%)`;
+  const best = quizStats[currentQuizId];
+  if (best && best.bestTotal > 0) {
+    const bestPct = Math.round((best.bestScore / best.bestTotal) * 100);
+    sub += ` · Лучший результат: ${best.bestScore}/${best.bestTotal} (${bestPct}%)`;
+  }
+  $('#quiz-result-sub').textContent = sub;
+
+  renderQuizWrongList();
+  $('#quiz-retry-wrong-btn').hidden = quizWrong.length === 0;
+  if (quizWrong.length) $('#quiz-retry-wrong-btn').textContent = `🔁 Повторить ошибки (${quizWrong.length})`;
+}
+
+function renderQuiz() {
+  if (quizIndex >= quizSession.length) { renderQuizResult(); return; }
+
+  $('#quiz-result').hidden = true;
+  $('#quiz-area').hidden = false;
+  $('#quiz-controls').hidden = false;
+
+  const q = quizSession[quizIndex];
+  $('#quiz-progress').textContent = `Вопрос ${quizIndex + 1} / ${quizSession.length}`;
+  $('#quiz-score-badge').textContent = quizIndex > 0 ? `Верно: ${quizScore}` : '';
+  $('#quiz-question').textContent = q.q;
+  $('#quiz-hint').textContent = q.correct.length === 1
+    ? 'Выберите один правильный ответ'
+    : `Выберите ${q.correct.length} правильных варианта`;
+
+  renderQuizOptionsList(q);
+
+  $('#quiz-submit-btn').hidden = quizAnswered;
+  $('#quiz-submit-btn').disabled = quizSelected.size === 0;
+  $('#quiz-next-btn').hidden = !quizAnswered;
+  $('#quiz-next-btn').textContent = quizIndex + 1 >= quizSession.length ? 'Смотреть результат' : 'Далее';
+}
+
 // ---------- Тосты ----------
 let toastTimer;
 function toast(msg, isError = false) {
@@ -362,8 +614,87 @@ function toast(msg, isError = false) {
   toastTimer = setTimeout(() => el.classList.remove('show'), 2600);
 }
 
-// ---------- Обновление колоды ----------
+// ---------- Режим: Флешкарточки / Квиз ----------
+async function setMode(next) {
+  if (mode === next) return;
+  mode = next;
+  meta.mode = next;
+  saveMeta();
+  await applyMode();
+}
+
+// Переключает видимость блоков под текущий режим; при первом входе в квиз — грузит его.
+async function applyMode() {
+  const isQuiz = mode === 'quiz';
+  $('#tab-cards-btn').setAttribute('aria-selected', String(!isQuiz));
+  $('#tab-quiz-btn').setAttribute('aria-selected', String(isQuiz));
+  $('#deck-bar').hidden = isQuiz;
+  $('#quiz-bar').hidden = !isQuiz;
+  $('#header-stats').hidden = isQuiz;
+
+  if (!isQuiz) {
+    $('#quiz-area').hidden = true;
+    $('#quiz-result').hidden = true;
+    $('#quiz-controls').hidden = true;
+    render();
+    return;
+  }
+
+  $('#card-area').hidden = true;
+  $('#empty-state').hidden = true;
+  $('#controls').hidden = true;
+
+  if (!quiz.length) {
+    try {
+      await loadQuizManifest();
+      await loadQuiz(meta.quiz);
+      populateQuizzes();
+    } catch (e) {
+      toast(`Не удалось загрузить квизы: ${e.message}`, true);
+      // Откатываемся в режим карточек, чтобы не остаться с пустым экраном.
+      mode = 'cards';
+      meta.mode = 'cards';
+      saveMeta();
+      $('#tab-cards-btn').setAttribute('aria-selected', 'true');
+      $('#tab-quiz-btn').setAttribute('aria-selected', 'false');
+      $('#deck-bar').hidden = false;
+      $('#quiz-bar').hidden = true;
+      $('#header-stats').hidden = false;
+      render();
+      return;
+    }
+  }
+
+  if (!quizSession.length) startQuiz();
+  else renderQuiz();
+}
+
+function resetQuizStats() {
+  if (!confirm('Сбросить статистику по всем квизам? Сами вопросы останутся.')) return;
+  quizStats = {};
+  saveQuizStats();
+  $('#settings').close();
+  toast('Статистика квизов сброшена');
+}
+
+// ---------- Обновление колоды/квиза ----------
 async function refresh(silent = false) {
+  if (mode === 'quiz') {
+    try {
+      const before = quiz.length;
+      await loadQuizManifest();
+      await loadQuiz(currentQuizId || meta.quiz);
+      populateQuizzes();
+      startQuiz();
+      if (!silent) {
+        const diff = quiz.length - before;
+        toast(diff > 0 ? `Обновлено: +${diff} вопросов` : 'Квиз обновлён');
+      }
+    } catch (e) {
+      toast(`Не удалось обновить: ${e.message}`, true);
+    }
+    return;
+  }
   try {
     const before = deck.length;
     await loadManifest();
@@ -422,14 +753,24 @@ function wireEvents() {
   $('#review-hard-btn').addEventListener('click', () => startPractice(Object.keys(sessionLog)));
   $('#deck-select').addEventListener('change', changeDeck);
 
+  $('#tab-cards-btn').addEventListener('click', () => setMode('cards'));
+  $('#tab-quiz-btn').addEventListener('click', () => setMode('quiz'));
+  $('#quiz-select').addEventListener('change', changeQuiz);
+  $('#quiz-submit-btn').addEventListener('click', submitQuizAnswer);
+  $('#quiz-next-btn').addEventListener('click', nextQuizQuestion);
+  $('#quiz-retry-all-btn').addEventListener('click', () => startQuiz(false));
+  $('#quiz-retry-wrong-btn').addEventListener('click', () => startQuiz(true));
+  $('#reset-quiz-btn').addEventListener('click', resetQuizStats);
+
   for (const btn of document.querySelectorAll('.grade')) {
     btn.addEventListener('click', () => gradeCurrent(btn.dataset.grade));
   }
 
-  // Горячие клавиши: пробел/Enter — перевернуть; 1–4 — оценки.
+  // Горячие клавиши: пробел/Enter — перевернуть; 1–4 — оценки. Только в режиме карточек.
   // Не перехватываем клавиши у интерактивных элементов (кнопки, селектор колод и т.п.),
   // чтобы Enter/Space активировали их, а не переворачивали карточку.
   document.addEventListener('keydown', (e) => {
+    if (mode !== 'cards') return;
     if (e.target.matches('input, textarea, select, button, a')) return;
     if (!flipped && (e.code === 'Space' || e.code === 'Enter')) { e.preventDefault(); flip(); return; }
     if (flipped) {
@@ -441,6 +782,7 @@ function wireEvents() {
 
 async function init() {
   load();
+  loadQuizStats();
   wireEvents();
   try {
     await loadManifest();
@@ -450,7 +792,9 @@ async function init() {
   }
   populateDecks();
   buildSession();
-  render();
+
+  mode = meta.mode === 'quiz' ? 'quiz' : 'cards';
+  await applyMode(); // отрендерит карточки или (если был активен) загрузит и покажет квиз
 
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('./sw.js').catch(() => {});
