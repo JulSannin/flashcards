@@ -486,6 +486,15 @@ function nextQuizQuestion() {
   renderQuiz();
 }
 
+// Русское склонение существительного по числу: 1 вариант, 2-4 варианта, 5+ вариантов.
+function pluralRu(n, one, few, many) {
+  const mod10 = n % 10;
+  const mod100 = n % 100;
+  if (mod10 === 1 && mod100 !== 11) return one;
+  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 10 || mod100 >= 20)) return few;
+  return many;
+}
+
 // Рисуем варианты ответа: до ответа — кликабельные radio/checkbox,
 // после ответа — статичные, с подсветкой верных/неверных/пропущенных.
 function renderQuizOptionsList(question) {
@@ -496,15 +505,19 @@ function renderQuizOptionsList(question) {
 
   question.options.forEach((optText, i) => {
     const li = document.createElement('li');
-    li.className = 'quiz-option';
+
+    // <label> — не только стили, но и нативная связь текста с полем для скринридеров;
+    // заодно клик по всей строке работает бесплатно, без ручной делегации.
+    const label = document.createElement('label');
+    label.className = 'quiz-option';
 
     if (quizAnswered) {
-      li.classList.add('answered');
+      label.classList.add('answered');
       const picked = quizSelected.has(i);
       const isCorrect = correctSet.has(i);
-      if (isCorrect && picked) li.classList.add('correct');
-      else if (!isCorrect && picked) li.classList.add('wrong');
-      else if (isCorrect && !picked) li.classList.add('missed');
+      if (isCorrect && picked) label.classList.add('correct');
+      else if (!isCorrect && picked) label.classList.add('wrong');
+      else if (isCorrect && !picked) label.classList.add('missed');
     }
 
     const input = document.createElement('input');
@@ -517,8 +530,8 @@ function renderQuizOptionsList(question) {
     const span = document.createElement('span');
     span.textContent = optText; // textContent — без риска XSS
 
-    li.append(input, span);
-    if (!quizAnswered) li.addEventListener('click', (e) => { if (e.target !== input) input.click(); });
+    label.append(input, span);
+    li.appendChild(label);
     ul.appendChild(li);
   });
 }
@@ -593,7 +606,7 @@ function renderQuiz() {
   $('#quiz-question').textContent = q.q;
   $('#quiz-hint').textContent = q.correct.length === 1
     ? 'Выберите один правильный ответ'
-    : `Выберите ${q.correct.length} правильных варианта`;
+    : `Выберите ${q.correct.length} правильных ${pluralRu(q.correct.length, 'вариант', 'варианта', 'вариантов')}`;
 
   renderQuizOptionsList(q);
 
@@ -664,6 +677,10 @@ async function applyMode() {
       return;
     }
   }
+
+  // Пока грузили, пользователь мог успеть переключиться обратно на карточки —
+  // не показываем квиз поверх них (данные всё равно останутся закэшированы на будущее).
+  if (mode !== 'quiz') return;
 
   if (!quizSession.length) startQuiz();
   else renderQuiz();
