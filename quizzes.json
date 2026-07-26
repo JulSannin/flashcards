@@ -104,6 +104,26 @@
       "id": "samurai-18",
       "name": "Самурай 18 · Inversion of Control и callbacks",
       "file": "quizzes/samurai-18.json"
+    },
+    {
+      "id": "samurai-19",
+      "name": "Самурай 19 · Синхронизация компонентов на примере плеера",
+      "file": "quizzes/samurai-19.json"
+    },
+    {
+      "id": "samurai-20",
+      "name": "Самурай 20 · TypeScript: основы",
+      "file": "quizzes/samurai-20.json"
+    },
+    {
+      "id": "samurai-21",
+      "name": "Самурай 21 · TypeScript в React",
+      "file": "quizzes/samurai-21.json"
+    },
+    {
+      "id": "samurai-22",
+      "name": "Самурай 22 · Архитектура и Data Access Layer",
+      "file": "quizzes/samurai-22.json"
     }
   ]
 }
