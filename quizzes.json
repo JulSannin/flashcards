@@ -14,6 +14,21 @@
       "id": "docker",
       "name": "Docker и Docker Compose",
       "file": "quizzes/docker.json"
+    },
+    {
+      "id": "samurai-01",
+      "name": "Самурай 1 · О курсе",
+      "file": "quizzes/samurai-01.json"
+    },
+    {
+      "id": "samurai-02",
+      "name": "Самурай 2 · Vanilla UI",
+      "file": "quizzes/samurai-02.json"
+    },
+    {
+      "id": "samurai-03",
+      "name": "Самурай 3 · Node.js",
+      "file": "quizzes/samurai-03.json"
     }
   ]
 }
