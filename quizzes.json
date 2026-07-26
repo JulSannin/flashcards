@@ -59,6 +59,21 @@
       "id": "samurai-09",
       "name": "Самурай 9 · useState",
       "file": "quizzes/samurai-09.json"
+    },
+    {
+      "id": "samurai-10",
+      "name": "Самурай 10 · Backend, API, Swagger",
+      "file": "quizzes/samurai-10.json"
+    },
+    {
+      "id": "samurai-11",
+      "name": "Самурай 11 · useEffect и запросы",
+      "file": "quizzes/samurai-11.json"
+    },
+    {
+      "id": "samurai-12",
+      "name": "Самурай 12 · filter и find",
+      "file": "quizzes/samurai-12.json"
     }
   ]
 }
