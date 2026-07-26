@@ -44,6 +44,21 @@
       "id": "samurai-06",
       "name": "Самурай 6 · Модули, import/export",
       "file": "quizzes/samurai-06.json"
+    },
+    {
+      "id": "samurai-07",
+      "name": "Самурай 7 · JSX vs HTML",
+      "file": "quizzes/samurai-07.json"
+    },
+    {
+      "id": "samurai-08",
+      "name": "Самурай 8 · Данные и алгоритм рендера",
+      "file": "quizzes/samurai-08.json"
+    },
+    {
+      "id": "samurai-09",
+      "name": "Самурай 9 · useState",
+      "file": "quizzes/samurai-09.json"
     }
   ]
 }
